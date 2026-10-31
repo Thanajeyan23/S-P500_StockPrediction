@@ -266,6 +266,10 @@ Ensure that both CSV datasets are available in the project directory or update t
 - Extend the analysis to portfolio optimisation and risk assessment.
 - Develop an interactive dashboard using Streamlit.
 
+## Dataset Links
+-Dataset1:https://www.kaggle.com/datasets/camnugent/sandp500/data
+-Dataset2:https://codesights.com/data/sp500-companies/#
+
 ## 👨‍💻 Author
 
 **Thanajeyan**
