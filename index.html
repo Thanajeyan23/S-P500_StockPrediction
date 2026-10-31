@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S&P 500 Interactive Dashboard</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+:root{--navy:#080d55;--blue:#0879bd;--cyan:#15a7d5;--bg:#f3f6fb;--ink:#172033;--muted:#718096;--card:#fff;--line:#e5eaf1}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--ink)}
+.topbar{height:62px;background:var(--navy);color:white;display:flex;align-items:center;padding:0 26px;gap:14px;position:sticky;top:0;z-index:5;box-shadow:0 3px 12px #0002}
+.logo{font-size:24px}.brand{font-size:21px;font-weight:650;letter-spacing:.2px}.topright{margin-left:auto;color:#cbd5ff;font-size:12px}
+.layout{display:grid;grid-template-columns:270px 1fr;min-height:calc(100vh - 62px)}
+.sidebar{background:#fff;border-right:1px solid var(--line);padding:22px 18px;position:sticky;top:62px;height:calc(100vh - 62px);overflow:auto}
+.sidebar h3{margin:0 0 8px;font-size:17px}.sidebar p{font-size:13px;color:var(--muted);line-height:1.5;margin:0 0 18px}
+label{display:block;font-size:12px;color:#566176;margin:16px 0 6px}select,input{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;color:#172033}
+select[multiple]{height:150px}button{border:0;background:var(--blue);color:#fff;border-radius:7px;padding:11px 15px;font-weight:650;cursor:pointer;width:100%;margin-top:16px}
+button:hover{background:#05639d}.hint{font-size:11px;color:#8a94a6;margin-top:15px;line-height:1.5}
+main{padding:26px;min-width:0}.section-title{font-size:18px;font-weight:700;margin:0 0 14px;display:flex;align-items:center;gap:9px}
+.section{margin-bottom:24px}.metrics{display:grid;grid-template-columns:repeat(5,minmax(130px,1fr));gap:14px}
+.metric{background:linear-gradient(135deg,#087fbd,#06477f);color:white;padding:17px;border-radius:11px;box-shadow:0 4px 12px #0b477322;min-height:104px}
+.metric .label{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:#d7eaff}.metric .value{font-size:24px;font-weight:750;margin-top:9px;white-space:nowrap}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.card{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:15px;box-shadow:0 2px 7px #14213d08;min-width:0}
+.card h3{font-size:14px;margin:2px 0 8px}.chart{height:340px;width:100%}.chart.tall{height:410px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 13px}.tab{width:auto;margin:0;background:#e6edf5;color:#40516a;padding:9px 13px}.tab.active{background:var(--navy);color:#fff}
+.tabpanel{display:none}.tabpanel.active{display:block}
+.table-wrap{overflow:auto;max-height:370px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{text-align:left;padding:9px;border-bottom:1px solid var(--line);white-space:nowrap}th{background:#f5f8fc;color:#4a5870;position:sticky;top:0}
+.kpi-note{font-size:12px;color:var(--muted);margin-top:9px}.notice{background:#fff8e7;border:1px solid #f4d58b;color:#795b17;padding:12px 14px;border-radius:9px;font-size:12px;line-height:1.5;margin-bottom:18px}
+.status{font-size:12px;color:#dbeafe;margin-left:14px}.footer{font-size:11px;color:#8b95a5;text-align:center;padding:22px}
+@media(max-width:1050px){.metrics{grid-template-columns:repeat(3,1fr)}.layout{grid-template-columns:230px 1fr}}
+@media(max-width:760px){.layout{display:block}.sidebar{position:relative;top:0;height:auto;border-right:0;border-bottom:1px solid var(--line)}main{padding:16px}.grid2{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}.topbar{padding:0 14px}.brand{font-size:16px}}
+</style></head>
+<body>
+<header class="topbar"><div class="logo">📊</div><div class="brand">S&P 500 Interactive Dashboard</div><div class="topright" id="dataStatus">Connecting to local data…</div></header>
+<div class="layout">
+<aside class="sidebar">
+<h3>⚙️ Controls</h3><p>Use the filters below to explore historical S&P 500 stock data.</p>
+<label for="company">Company</label><select id="company"></select>
+<label for="start">Start date</label><input type="date" id="start">
+<label for="end">End date</label><input type="date" id="end">
+<label for="sectors">Filter sectors (Ctrl/Cmd to select multiple)</label><select id="sectors" multiple></select>
+<button id="apply">Apply filters</button>
+<div class="hint">Dataset: historical daily stock prices<br>Period: February 2013 – February 2018<br><br>Source files must be placed beside app.py.</div>
+</aside>
+<main>
+<div class="notice"><b>Historical-data notice:</b> This dashboard uses data from 2013–2018, not live prices. Model outputs are historical demonstrations, not current forecasts or investment advice.</div>
+<section class="section"><div class="section-title">📌 Key Metrics</div><div class="metrics" id="metrics">
+<div class="metric"><div class="label">Average Close</div><div class="value">—</div></div><div class="metric"><div class="label">Maximum Close</div><div class="value">—</div></div><div class="metric"><div class="label">Minimum Close</div><div class="value">—</div></div><div class="metric"><div class="label">Period Return</div><div class="value">—</div></div><div class="metric"><div class="label">Total Volume</div><div class="value">—</div></div></div></section>
+<section class="section"><div class="section-title">📈 Price & Volume Trends</div><div class="grid2"><div class="card"><h3 id="priceTitle">Price Trend</h3><div id="priceChart" class="chart"></div></div><div class="card"><h3>Monthly Trading Volume</h3><div id="volumeChart" class="chart"></div></div></div></section>
+<section class="section"><div class="section-title">🔎 Return Analysis & Sector Comparison</div><div class="grid2"><div class="card"><h3>Daily Return Distribution</h3><div id="histChart" class="chart"></div></div><div class="card"><h3>Average Close Price by Sector</h3><div id="sectorAvgChart" class="chart"></div></div></div></section>
+<section class="section"><div class="section-title">📊 Market Analysis</div>
+<div class="tabs"><button class="tab active" data-tab="performers">Top Performers</button><button class="tab" data-tab="risk">Risk Analysis</button><button class="tab" data-tab="sector">Sector Performance</button><button class="tab" data-tab="correlation">Correlation & Monthly</button><button class="tab" data-tab="clusters">K-Means Clustering</button></div>
+<div id="performers" class="tabpanel active card"><div class="grid2"><div id="topChart" class="chart"></div><div class="card"><h3>Top 10 Historical Returns</h3><div id="topTable" class="table-wrap"></div></div></div></div>
+<div id="risk" class="tabpanel card"><div class="grid2"><div id="volChart" class="chart"></div><div id="drawChart" class="chart"></div></div><div id="riskScatter" class="chart tall"></div></div>
+<div id="sector" class="tabpanel card"><div id="sectorTrend" class="chart tall"></div><div id="sectorTable" class="table-wrap"></div></div>
+<div id="correlation" class="tabpanel card"><div id="corrChart" class="chart tall"></div><div id="monthlyChart" class="chart tall"></div></div>
+<div id="clusters" class="tabpanel card"><div id="clusterChart" class="chart tall"></div><p class="kpi-note">K-Means groups companies using average daily return, daily volatility and log-transformed average trading volume. Cluster labels have no investment-quality meaning.</p></div>
+</section>
+<section class="section"><div class="section-title">🤖 Predictive Analytics</div><div class="grid2"><div class="card"><h3>Linear Regression — Next 21 Trading-Day Return</h3><div id="regMetrics"></div><p class="kpi-note">MAE and RMSE are expressed as decimal returns. A negative R² means the model underperforms the test-set mean baseline.</p></div><div class="card"><h3>Logistic Regression — Return Direction</h3><div id="classMetrics"></div><div id="confusionChart" class="chart"></div></div></div><div class="card" style="margin-top:15px"><h3>Latest Historical Model Outputs (not current forecasts)</h3><div id="predictionTable" class="table-wrap"></div></div></section>
+<section class="section"><div class="section-title">💰 What-If Investment Scenarios</div><div class="card"><div class="grid2"><div><label for="investment">Hypothetical investment (₹)</label><input id="investment" type="number" min="100" step="1000" value="10000"><div id="scenarioCards"></div></div><div id="scenarioChart" class="chart"></div></div><p class="kpi-note">Scenarios use pooled historical 21-day return percentiles. They are descriptive illustrations, not forecasts or guaranteed outcomes.</p></div></section>
+<div class="footer">S&P 500 Stock Market Analysis & Predictive Insights · Local academic dashboard</div>
+</main></div>
+<script>
+const $=id=>document.getElementById(id);
+const fmt=(n,d=2)=>Number(n).toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});
+const layoutBase={paper_bgcolor:"#fff",plot_bgcolor:"#fff",font:{family:"Inter, Arial",color:"#40516a",size:11},margin:{l:55,r:20,t:45,b:50},autosize:true};
+async function getJSON(url){const r=await fetch(url);const j=await r.json();if(!r.ok)throw new Error(j.error||"Request failed");return j}
+function tableHTML(rows,cols){if(!rows||!rows.length)return "<p>No data</p>";return `<table><thead><tr>${cols.map(c=>`<th>${c[1]}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td>${c[2]?c[2](r[c[0]]):r[c[0]]??"—"}</td>`).join("")}</tr>`).join("")}</tbody></table>`}
+function plot(id,data,layout){Plotly.newPlot(id,data,{...layoutBase,...layout}, {responsive:true,displaylogo:false})}
+async function init(){try{const m=await getJSON("/api/metadata");$("dataStatus").textContent=`${m.rows.toLocaleString()} records · ${m.tickers} tickers`;
+$("company").innerHTML=m.companies.map(c=>`<option value="${c.Ticker}" ${c.Ticker==="AAPL"?"selected":""}>${c.Company_Name} (${c.Ticker})</option>`).join("");
+$("start").value=m.min_date;$("end").value=m.max_date;
+$("sectors").innerHTML=m.sectors.map(s=>`<option value="${s}" selected>${s}</option>`).join("");
+await refresh();
+}catch(e){$("dataStatus").textContent="Data not loaded";document.querySelector("main").innerHTML=`<div class="notice"><b>Unable to load datasets.</b><br>${e.message}<br><br>Put <code>all_stocks_5yr.csv</code> and <code>sp500_companies.csv</code> in the same folder as <code>app.py</code>, then restart the server.</div>`}}
+async function refresh(){try{
+const p=new URLSearchParams({ticker:$("company").value,start:$("start").value,end:$("end").value});
+[...$("sectors").selectedOptions].forEach(o=>p.append("sector",o.value));
+const d=await getJSON("/api/dashboard?"+p.toString());render(d);
+}catch(e){alert(e.message)}}
+function render(d){const m=d.metrics;
+const cards=[["AVERAGE CLOSE","$"+fmt(m.avg_close)],["MAXIMUM CLOSE","$"+fmt(m.max_close)],["MINIMUM CLOSE","$"+fmt(m.min_close)],["PERIOD RETURN",fmt(m.period_return)+"%"],["TOTAL VOLUME",fmt(m.total_volume/1e9)+" B"]];
+$("metrics").innerHTML=cards.map(c=>`<div class="metric"><div class="label">${c[0]}</div><div class="value">${c[1]}</div></div>`).join("");
+$("priceTitle").textContent=`Price Trend — ${m.ticker}`;
+plot("priceChart",[{x:d.price.map(x=>x.date),y:d.price.map(x=>x.close),name:"Close price",type:"scatter",mode:"lines",line:{color:"#168ac4",width:1.5}},{x:d.price.map(x=>x.date),y:d.price.map(x=>x.moving_average),name:"30-day average",type:"scatter",mode:"lines",line:{color:"#f59e0b",width:2}}],{xaxis:{title:"Date"},yaxis:{title:"Price (USD)"},legend:{orientation:"h",y:1.15}});
+plot("volumeChart",[{x:d.volume.map(x=>x.date),y:d.volume.map(x=>x.volume),type:"bar",marker:{color:"#f39a36"}}],{xaxis:{title:"Month"},yaxis:{title:"Shares traded"}});
+plot("histChart",[{x:d.histogram.map(x=>x.range),y:d.histogram.map(x=>x.count),type:"bar",marker:{color:"#42b978"}}],{xaxis:{title:"Daily return range (%)",tickangle:-45},yaxis:{title:"Frequency"}});
+plot("sectorAvgChart",[{x:d.sector_avg.map(x=>x.avg_close),y:d.sector_avg.map(x=>x.sector),type:"bar",orientation:"h",marker:{color:"#1476b8"}}],{xaxis:{title:"Average close (USD)"},yaxis:{automargin:true}});
+plot("topChart",[{x:d.top_performers.map(x=>x.total_return),y:d.top_performers.map(x=>x.Ticker),type:"bar",orientation:"h",marker:{color:"#1476b8"},text:d.top_performers.map(x=>fmt(x.total_return)+"%"),textposition:"auto"}],{title:"Top companies by historical price return",xaxis:{title:"Total return (%)"},yaxis:{automargin:true}});
+$("topTable").innerHTML=tableHTML(d.top_performers,[["Ticker","Ticker"],["Company_Name","Company"],["total_return","Return",v=>fmt(v)+"%"]]);
+const risk=[...d.risk].sort((a,b)=>b.annual_vol-a.annual_vol).slice(0,10).reverse();
+plot("volChart",[{x:risk.map(x=>x.annual_vol),y:risk.map(x=>x.Ticker),type:"bar",orientation:"h",marker:{color:"#dc8c36"}}],{title:"Highest annualised volatility",xaxis:{title:"Annualised volatility (daily std × √252)"},yaxis:{automargin:true}});
+const dd=[...d.risk].sort((a,b)=>a.max_drawdown-b.max_drawdown).slice(0,10).reverse();
+plot("drawChart",[{x:dd.map(x=>x.max_drawdown*100),y:dd.map(x=>x.Ticker),type:"bar",orientation:"h",marker:{color:"#d65a62"}}],{title:"Largest maximum drawdowns",xaxis:{title:"Drawdown (%)"},yaxis:{automargin:true}});
+plot("riskScatter",[{x:d.risk.map(x=>x.annual_vol),y:d.risk.map(x=>x.total_return),text:d.risk.map(x=>x.Company_Name),customdata:d.risk.map(x=>x.Ticker),mode:"markers",type:"scatter",marker:{color:"#1476b8",size:8,opacity:.7},hovertemplate:"%{text} (%{customdata})<br>Volatility: %{x:.2f}<br>Return: %{y:.2f}%<extra></extra>"}],{title:"Risk vs historical return",xaxis:{title:"Annualised volatility"},yaxis:{title:"Total return (%)"}});
+const sectors=[...new Set(d.sector_lines.map(x=>x.sector))];
+plot("sectorTrend",sectors.map(s=>{const a=d.sector_lines.filter(x=>x.sector===s);return{x:a.map(x=>x.date),y:a.map(x=>x.return),name:s,type:"scatter",mode:"lines"}}),{title:"Equal-weighted cumulative sector returns",xaxis:{title:"Date"},yaxis:{title:"Cumulative return (%)"}});
+const latestSector={};d.sector_lines.forEach(x=>{if(!latestSector[x.sector]||x.date>latestSector[x.sector].date)latestSector[x.sector]=x});
+const sr=Object.values(latestSector).sort((a,b)=>b.return-a.return);
+$("sectorTable").innerHTML=tableHTML(sr,[["sector","Sector"],["return","Cumulative return",v=>fmt(v)+"%"]]);
+const n=d.correlation_tickers.length,z=Array.from({length:n},()=>Array(n).fill(0));
+d.correlation.forEach(c=>{const i=d.correlation_tickers.indexOf(c.y),j=d.correlation_tickers.indexOf(c.x);if(i>=0&&j>=0)z[i][j]=c.value});
+plot("corrChart",[{z,x:d.correlation_tickers,y:d.correlation_tickers,type:"heatmap",zmin:-1,zmax:1,colorscale:"RdBu",reversescale:true,colorbar:{title:"Corr."}}],{title:"Daily-return correlation"});
+plot("monthlyChart",[{x:d.monthly.map(x=>x.month),y:d.monthly.map(x=>x.return),type:"bar",marker:{color:d.monthly.map(x=>x.return>=0?"#36a879":"#d65a62")}}],{title:"Monthly equal-weighted market returns",xaxis:{title:"Month"},yaxis:{title:"Return (%)"}});
+plot("clusterChart",[{x:d.clusters.map(x=>x.volatility),y:d.clusters.map(x=>x.avg_return),text:d.clusters.map(x=>x.company+" ("+x.ticker+")"),mode:"markers",type:"scatter",marker:{color:d.clusters.map(x=>x.cluster),colorscale:"Viridis",size:9},hovertemplate:"%{text}<br>Volatility %{x:.3f}<br>Avg daily return %{y:.3f}%<extra></extra>"}],{title:"K-Means company groups",xaxis:{title:"Daily volatility (%)"},yaxis:{title:"Average daily return (%)"}});
+$("regMetrics").innerHTML=d.regression.mae===undefined?"Model metrics unavailable":`<div class="metrics" style="grid-template-columns:repeat(3,1fr)"><div class="metric"><div class="label">MAE</div><div class="value">${fmt(d.regression.mae,4)}</div></div><div class="metric"><div class="label">RMSE</div><div class="value">${fmt(d.regression.rmse,4)}</div></div><div class="metric"><div class="label">R²</div><div class="value">${fmt(d.regression.r2,4)}</div></div></div><p class="kpi-note">Test begins ${d.regression.split_date}</p>`;
+const c=d.classification;
+$("classMetrics").innerHTML=c.accuracy===undefined?"Classification metrics unavailable":`<p>Accuracy: <b>${fmt(c.accuracy*100)}%</b> · Precision: <b>${fmt(c.precision)}</b> · Recall: <b>${fmt(c.recall)}</b> · F1: <b>${fmt(c.f1)}</b></p>`;
+if(c.confusion)plot("confusionChart",[{z:c.confusion,x:["Predicted non-positive","Predicted positive"],y:["Actual non-positive","Actual positive"],type:"heatmap",colorscale:"Blues",showscale:false, text:c.confusion.map(r=>r.map(String)),texttemplate:"%{text}"}],{title:"Confusion matrix"});
+$("predictionTable").innerHTML=tableHTML(d.predictions,[["Ticker","Ticker"],["Company_Name","Company"],["date","Last data date"],["predicted_return","Predicted return",v=>fmt(v)+"%"],["probability_rise","Probability positive",v=>fmt(v)+"%"]]);
+const amount=Number($("investment").value)||10000;const names=["pessimistic","normal","optimistic"];const labels=["Pessimistic (10th percentile)","Normal (median)","Optimistic (90th percentile)"];
+const rows=names.map((n,i)=>({scenario:labels[i],ret:d.scenarios[n],value:amount*(1+d.scenarios[n]),pl:amount*d.scenarios[n]}));
+$("scenarioCards").innerHTML=rows.map(r=>`<div style="padding:10px 0;border-bottom:1px solid #e5eaf1"><b>${r.scenario}</b><div style="font-size:20px;font-weight:700;color:#075b91">₹${fmt(r.value)}</div><small>Return ${fmt(r.ret*100)}% · P/L ₹${fmt(r.pl)}</small></div>`).join("");
+plot("scenarioChart",[{x:rows.map(x=>x.scenario),y:rows.map(x=>x.value),type:"bar",marker:{color:["#d65a62","#e5ad3d","#36a879"]},text:rows.map(x=>"₹"+fmt(x.value)),textposition:"auto"}],{title:"Estimated value after 21 trading days",yaxis:{title:"Investment value (₹)"},shapes:[{type:"line",x0:-.5,x1:2.5,y0:amount,y1:amount,line:{dash:"dash",color:"#333"}}]});
+}
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".tabpanel").forEach(x=>x.classList.remove("active"));b.classList.add("active");$(b.dataset.tab).classList.add("active");setTimeout(()=>window.dispatchEvent(new Event("resize")),80)}));
+$("apply").addEventListener("click",refresh);$("investment").addEventListener("change",refresh);
+init();
+</script></body></html>
