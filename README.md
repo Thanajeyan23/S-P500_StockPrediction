@@ -180,17 +180,18 @@ S&P-500-Stock-Market-Analysis/
 │
 ├── README.md
 ├── requirements.txt
+├── .gitignore
 │
 ├── S&P_Predictions.ipynb
 │
-├── all_stocks_5yr.csv
-├── sp500_companies.csv
+├── app.py
 │
-└── Analysis_Results/
-    ├── company_performance.csv
-    ├── volatility_analysis.csv
-    ├── drawdown_analysis.csv
-    └── other generated analysis files
+├── templates/
+│   └── index.html
+│
+├── datasets/
+│   ├── all_stocks_5yr.csv
+│   └── sp500_companies.csv
 ```
 
 *The Analysis_Results folder is generated when the notebook is executed. The exact output files depend on the notebook execution.*
