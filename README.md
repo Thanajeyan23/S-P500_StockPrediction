@@ -28,6 +28,59 @@ The project also uses K-Means clustering to group companies based on their histo
 - Classify stock return direction using Logistic Regression.
 - Simulate hypothetical investment outcomes using historical return scenarios.
 
+## 🌐 Interactive Web Dashboard
+
+This project includes a browser-based dashboard developed using Flask, HTML, CSS, JavaScript and Plotly.
+
+### Features
+- Interactive stock selection and date filters.
+- Stock price and trading-volume analysis.
+- Historical return and risk analysis.
+- Sector-wise performance comparison.
+- Stock correlation heatmap.
+- K-Means clustering.
+- Linear Regression and Logistic Regression.
+- What-if investment scenario simulation.
+
+### Run the Dashboard Locally
+
+**1. Clone the repository**
+
+```bash
+git clone https://github.com/Thanajeyan23/YOUR_REPOSITORY.git
+```
+
+**2. Navigate to the project folder**
+
+```bash
+cd YOUR_REPOSITORY
+```
+
+**3. Install dependencies**
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+**4. Start the Flask application**
+
+```bash
+python app.py
+```
+
+**5. Open the dashboard**
+
+Visit http://127.0.0.1:5000
+
+### Required Dataset Files
+
+Ensure the following files are present in the project root:
+
+- `all_stocks_5yr.csv`
+- `sp500_companies.csv`
+
+The dashboard uses these local datasets to generate its visualisations and analytical results.
+
 ## 📊 Dataset Description
 
 The project uses two CSV datasets:
